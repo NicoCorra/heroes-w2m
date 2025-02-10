@@ -1,0 +1,33 @@
+<div class="mt-2 ml-2">
+  <h3>Listado de Héroes</h3>
+</div>
+
+<mat-divider></mat-divider>
+
+<div class="col-11 sm:col-11 md:col-11 xl:col-11 ml-2 mr-2">
+  <heroe-search (searchText)="onSearchTextChange($event)"></heroe-search>
+</div>
+
+<div class="col-11 sm:col-11 md:col-11 xl:col-11 ml-2 mr-2">
+  <button mat-button mat-raised (click)="goToNew()">
+    <mat-icon>add</mat-icon>
+    Agregar
+  </button>
+</div>
+
+<div class="grid bm-8 pt-2">
+  @for (heroe of heroesToShow; track $index) {
+    <div class="col-12 sm:col-4 md:col-12 xl:col-2">
+      <heroes-heroe-card [heroe]="heroe"
+      (deleteHeroe)="onDeleteHero($event)">
+      </heroes-heroe-card>
+    </div>
+  }
+</div>
+
+<app-paginator
+[length]="length"
+[pageSize]="pageSize"
+(page)="onPageChange($event)"
+aria-label="Select page">
+</app-paginator>

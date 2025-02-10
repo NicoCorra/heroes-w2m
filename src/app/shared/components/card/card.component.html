@@ -1,0 +1,40 @@
+
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>{{ heroe().superhero }}</mat-card-title>
+    <mat-card-subtitle>{{ heroe().alter_ego }}</mat-card-subtitle>
+  </mat-card-header>
+
+  <img mat-card-image [src]="heroe() | imageHeroe" [alt]="heroe().alt_img">
+
+  <mat-card-content class="mt-2">
+    <h6>{{ heroe().publisher }}</h6>
+    <p>
+      <strong>Primera aparición</strong> {{ heroe().first_appearance }}
+    </p>
+  </mat-card-content>
+
+  <mat-divider></mat-divider>
+
+  <mat-card-actions>
+
+    <button mat-button
+      mat-raised
+      color="primary"
+      [routerLink]="['/pages/edit', heroe().id ]">
+      <mat-icon>edit</mat-icon>
+      Editar
+    </button>
+
+    <span class="spacer"></span>
+
+    <button mat-button
+      mat-raised
+      (click)="onDeleteHeroe(heroe().id)"
+      [routerLink]="['/pages/list']">
+      <mat-icon>delete</mat-icon>
+      Borrar
+    </button>
+
+  </mat-card-actions>
+</mat-card>
