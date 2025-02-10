@@ -10,12 +10,13 @@ import { MaterialModule } from '../../shared/material/material.module';
 import { CommonModule } from '@angular/common';
 import { ImageHeroePipe } from '../../shared/pipes/image-heroe.pipe';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { UppercaseDirective } from '../../shared/directives/upper-case.directive';
 
 
 @Component({
   selector: 'app-new',
   standalone: true,
-  imports: [MaterialModule, CommonModule, ImageHeroePipe, ReactiveFormsModule, RouterLink],
+  imports: [MaterialModule, CommonModule, ImageHeroePipe, ReactiveFormsModule, RouterLink, UppercaseDirective],
   templateUrl: './new.component.html',
   styleUrl: './new.component.css'
 })

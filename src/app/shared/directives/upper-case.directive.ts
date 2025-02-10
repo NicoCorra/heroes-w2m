@@ -2,17 +2,17 @@ import { Directive, ElementRef, HostListener, input, Input } from '@angular/core
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Directive({
-  selector: 'appUpperCase]',
+  selector: '[appUppercase]',
   standalone: true,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: UpperCaseDirective,
+      useExisting: UppercaseDirective,
       multi: true
     }
   ]
 })
-export class UpperCaseDirective implements ControlValueAccessor {
+export class UppercaseDirective implements ControlValueAccessor {
 
   @Input() value: string = '';
 
@@ -27,18 +27,18 @@ export class UpperCaseDirective implements ControlValueAccessor {
   onChange = (value: string) => {};
   onTouchEnd = () => {};
 
-
-
   writeValue(value: string): void {
     this.value = value;
     if (this.el.nativeElement) {
       this.el.nativeElement.value = value?.toUpperCase();
     }
   }
-  registerOnChange(fn: any): void {
-    throw new Error('Method not implemented.');
+
+  registerOnChange(fn: (value: any) => void): void {
+    this.onChange = fn;
   }
-  registerOnTouched(fn: any): void {
+
+  registerOnTouched(fn: () => void): void {
     this.onTouchEnd = fn;
   }
 }
