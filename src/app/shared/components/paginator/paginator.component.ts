@@ -15,7 +15,7 @@ import { PaginatorIntlService } from '../../services/paginator-intl.service';
 export class PaginatorComponent {
   @Input() length: number | undefined;
   @Input() pageSize: number | undefined;
-
+  @Input() pageIndex: number | undefined;
   @Output() page = new EventEmitter<any>();
 
   onPageChange(event: any): void {

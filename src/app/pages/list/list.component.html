@@ -26,8 +26,9 @@
 </div>
 
 <app-paginator
-[length]="length"
-[pageSize]="pageSize"
-(page)="onPageChange($event)"
-aria-label="Select page">
+  [length]="length"
+  [pageSize]="pageSize"
+  [pageIndex]="pageIndex"
+  (page)="onPageChange($event)"
+  aria-label="Select page">
 </app-paginator>

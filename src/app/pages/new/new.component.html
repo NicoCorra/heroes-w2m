@@ -2,7 +2,9 @@
   <h4>
     {{ currentHeroe.id ? 'Editar' : 'Agregar' }}
     héroe
-    <small *ngIf="currentHeroe.id">{{ currentHeroe.superhero }}</small>
+    @if(currentHeroe.id){
+      <small>{{ currentHeroe.superhero }}</small>
+    }
   </h4>
 </div>
 
@@ -14,7 +16,7 @@
     <mat-card>
       <mat-card-content>
 
-        <form class="grid" [formGroup]="heroeForm" (ngSubmit)="onSubmit()">
+        <form class="grid" (ngSubmit)="onSubmit()">
 
           <mat-form-field class="col-12 sm:col-6">
             <mat-label>Super héroe</mat-label>
@@ -22,8 +24,9 @@
               matInput
               type="text"
               required
-              formControlName="superhero"
+              [(ngModel)]="currentHeroe.superhero"
               appUppercase
+              name="superhero"
             />
           </mat-form-field>
 
@@ -33,8 +36,9 @@
               matInput
               type="text"
               required
-              formControlName="alter_ego"
+              [(ngModel)]="currentHeroe.alter_ego"
               appUppercase
+              name="alter_ego"
             />
           </mat-form-field>
 
@@ -45,21 +49,25 @@
               matInput
               type="text"
               required
-              formControlName="first_appearance"
+              [(ngModel)]="currentHeroe.first_appearance"
               appUppercase
+              name="first_appearance"
             />
           </mat-form-field>
 
           <mat-form-field class="col-12">
             <mat-label>Creador</mat-label>
             <mat-select
-              formControlName="publisher"
+              [(ngModel)]="currentHeroe.publisher"
+              name="publisher"
               required
             >
-              <mat-option *ngFor="let publisher of publishers"
+            @for (publisher of publishers; track $index) {
+              <mat-option
                 [value]="publisher.id">
                 {{ publisher.desc }}
               </mat-option>
+            }
             </mat-select>
           </mat-form-field>
 
@@ -68,8 +76,9 @@
             <input
               matInput
               type="text"
-              formControlName="alt_img"
+              [(ngModel)]="currentHeroe.alt_img"
               appUppercase
+              name="alt_img"
             />
           </mat-form-field>
         </form>

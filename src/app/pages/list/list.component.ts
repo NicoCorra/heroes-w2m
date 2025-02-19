@@ -1,4 +1,4 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, OnInit, ViewChild, viewChild } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, OnInit, ViewChild } from '@angular/core';
 import { HeroesService } from '../../shared/services/heroes.service';
 import { Heroe } from '../../shared/interfaces/heroe';
 import { MaterialModule } from '../../shared/material/material.module';
@@ -6,11 +6,10 @@ import { CommonModule } from '@angular/common';
 import { CardComponent } from '../../shared/components/card/card.component';
 import { PaginatorComponent } from '../../shared/components/paginator/paginator.component';
 import { SearchComponent } from '../../shared/components/search/search.component';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
-
 
 @Component({
   selector: 'app-list',
@@ -38,22 +37,38 @@ export class ListComponent implements OnInit {
               private router: Router,
               private snackbar: MatSnackBar,
               private dialog: MatDialog,
-  ) {}
+              private route: ActivatedRoute
+              ) {
+                this.reloadHeroes();
+              }
 
   ngOnInit(): void {
-    this.heroesService.getHeroes().subscribe(heroes => {
-      this.heroes = heroes;
-      this.filteredHeroes = heroes
-      this.length = this.heroes.length;
+    this.loadHeroes();
+  }
 
-      this.updateHeroesToShow();
+  loadHeroes() {
+    this.heroes = this.heroesService.getHeroes()();
+    this.filteredHeroes = [...this.heroes];
+    this.length = this.filteredHeroes.length;
+    this.pageIndex = 0;
+    this.updateHeroesToShow();
+  }
+
+  reloadHeroes() {
+    this.route.queryParams.subscribe(params => {
+      if (params['reload']) {
+        setTimeout(() => {
+          this.filteredHeroes = [...this.heroesService.getHeroes()()];
+          this.length = this.filteredHeroes.length;
+          this.pageIndex = 0;
+        }, 200);
+      }
     });
   }
 
   onPageChange(event: any): void {
     this.pageIndex = event.pageIndex;
     this.pageSize = event.pageSize;
-
     this.updateHeroesToShow();
   }
 
@@ -90,26 +105,19 @@ export class ListComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.heroesService.deleteHeroe(id)
-          .subscribe(wasDeleted => {
-            if (wasDeleted) {
-              this.heroes = this.heroes.filter(heroe => heroe.id !== id);
-              this.filteredHeroes = this.heroes.filter(heroe => heroe.id !== id);
+        this.heroesService.deleteHeroe(id);
 
-              this.pageIndex = 0;
-              this.length = this.filteredHeroes.length;
+        this.heroes = this.heroes.filter(hero => hero.id !== id);
+        this.filteredHeroes = [...this.heroes];
 
-              if (this.paginator) {
-                this.pageChange({ pageIndex: 0, pageSize: this.pageSize });
-              }
+        this.length = this.filteredHeroes.length;
+        this.pageIndex = 0;
 
-              this.updateHeroesToShow();
-              this.showSnackbar(`${id} ha sido eliminado.`);
-              window.location.reload();
-            } else {
-              this.showSnackbar('Hubo un problema al eliminar el héroe.');
-            }
-          });
+        if (this.paginator) {
+          this.pageChange({ pageIndex: 0, pageSize: this.pageSize });
+        }
+
+        this.showSnackbar(`${id} ha sido eliminado.`);
       } else {
         this.showSnackbar('Operación de eliminación cancelada.');
       }
