@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HeroesService } from './heroes.service';
-import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Heroe } from '../interfaces/heroe';
 
@@ -67,62 +66,89 @@ describe('HeroesService', () => {
   });
 
   it('sould be the heroes list', async () => {
-    const mockResponse = heroesListMock
+    const heroesSpy = jest.spyOn(service.heroes, 'set');
 
-    const heroes$ = service.getHeroes();
-    const heroesPromise = firstValueFrom(heroes$);
+    const result = service.getHeroes();
 
     const req = httpTesting.expectOne(`${ baseUrl }/heroes`);
     expect(req.request.method).toBe('GET');
 
-    req.flush(mockResponse);
-    expect(await heroesPromise).toEqual(mockResponse)
+    req.flush(heroesListMock);
+
+    expect(heroesSpy).toHaveBeenCalledWith(heroesListMock);
+    expect(result).toBe(service.heroes);
   });
 
-  it('should return the hero by id', async () => {
-    const heroId = 'dc-batman';
-    const expectedHero = heroesListMock.find(hero => hero.id === heroId);
+  it('should call getHeroes if the heroes is empty', async () => {
+    const getHeroesSpy = jest.spyOn(service, 'getHeroes');
 
-    const hero$ = service.getHeroesById(heroId);
-    const heroPromise = firstValueFrom(hero$);
+    service.heroes.set([]);
+    service.getHeroesById('dc-batman')
 
-    const req = httpTesting.expectOne(`${baseUrl}/heroes/${heroId}`);
-    expect(req.request.method).toBe('GET');
+    expect(getHeroesSpy).toHaveBeenCalled();
+  });
 
-    if (expectedHero) {
-      req.flush(expectedHero);
-    } else {
-      req.flush(null, { status: 404, statusText: 'Not Found' });
-    }
+  it('should return the correct heroes is heroes has data', async () => {
+    const getHeroesSpy = jest.spyOn(service, 'getHeroes');
 
-    const hero = await heroPromise;
-    expect(hero).toEqual(expectedHero);
+    service.heroes.set(heroesListMock);
+
+    const result = service.getHeroesById('dc-batman')
+
+    expect(result()).toEqual({
+      id: "dc-batman",
+      superhero: "Batman",
+      publisher: "DCComics",
+      alter_ego: "Bruce Wayne",
+      first_appearance: "Detective Comics #27"
+    });
+  });
+
+  it('should return undefined if the ID does not exist', async () => {
+
+    service.heroes.set(heroesListMock);
+
+    const result = service.getHeroesById('dc-hulk')
+
+    expect(result).toBeUndefined();
   });
 
   it('should add a hero successfully', async () => {
-    service.addHeroe(newHero).subscribe(response => {
-      expect(response).toEqual(addedHeroResponse);
-    });
+    const heroe = service.addHeroe(newHero);
 
     const req = httpTesting.expectOne(`${baseUrl}/heroes`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(newHero);
 
     req.flush(addedHeroResponse);
+    expect(heroe()).toEqual(addedHeroResponse);
+    expect(service.getHeroes()).toContain(addedHeroResponse);
   });
 
   it('should return undefined if the API call fails', async () => {
     const heroeId = 'dc-batman';
     const errorResponse = { status: 404, statusText: 'No found' };
 
-    const heroes$ = service.getHeroesById(heroeId);
-    const heroPromise = firstValueFrom(heroes$);
+    service.getHeroesById(heroeId);
 
     const req = httpTesting.expectOne(`${baseUrl}/heroes/${heroeId}`);
     expect(req.request.method).toBe('GET');
 
     req.flush('No found', errorResponse);
-    expect(await heroPromise).toBeUndefined();
+    expect(await service.getHeroesById(heroeId)()).toBeUndefined();
+  });
+
+  it('should log an error to the console if the request fails', async () => {
+
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+    service.addHeroe(newHero);
+
+    const req = httpTesting.expectOne(`${baseUrl}/heroes`);
+    req.flush('Error de servidor', { status: 500, statusText: 'Internal Server Error' });
+
+    expect(errorSpy).toHaveBeenCalledWith('Error adding heore:', expect.anything());
+    errorSpy.mockRestore();
   });
 
   it('should return all heroes if search name is less than 3 characters', async () => {
@@ -155,8 +181,7 @@ describe('HeroesService', () => {
 
     const updatedHeroResponse: Heroe = { ...heroWithId };
 
-    const heroes$ = service.updateHeroe(heroWithId);
-    const heroPromise = firstValueFrom(heroes$);
+    service.updateHeroe(heroWithId);
 
     const req = httpTesting.expectOne(`${baseUrl}/heroes/dc-batman`);
     expect(req.request.method).toBe('PUT');
@@ -164,7 +189,7 @@ describe('HeroesService', () => {
 
     req.flush(updatedHeroResponse);
 
-    expect(await heroPromise).toEqual(updatedHeroResponse);
+    expect(await service.updateHeroe(heroWithId)()).toEqual(updatedHeroResponse);
   });
 
 
@@ -177,8 +202,7 @@ describe('HeroesService', () => {
 
     const errorResponse = { status: 500, statusText: 'Server Error' };
 
-    const heroes$ = service.updateHeroe(heroWithId);
-    const heroPromise = firstValueFrom(heroes$);
+    service.updateHeroe(heroWithId);
 
     const req = httpTesting.expectOne(`${baseUrl}/heroes/dc-batman`);
     expect(req.request.method).toBe('PUT');
@@ -187,7 +211,7 @@ describe('HeroesService', () => {
     req.flush('Error', errorResponse);
 
     try {
-      await heroPromise;
+      await service.updateHeroe(heroWithId)();
       fail('Expected error, but got a response');
     } catch (error: any) {
       expect(error.status).toBe(500);
@@ -198,29 +222,30 @@ describe('HeroesService', () => {
   it('should delete a hero successfully', async () => {
     const heroId = 'dc-batman';
 
-    const deleteHero = service.deleteHeroe(heroId);
-    const deleteHeroPromise = firstValueFrom(deleteHero);
+    service.deleteHeroe(heroId);
 
     const req = httpTesting.expectOne(`${baseUrl}/heroes/${heroId}`);
     expect(req.request.method).toBe('DELETE');
 
-    req.flush(null);
+    req.flush({});
 
-    expect(await deleteHeroPromise).toBe(true);
+    expect(await service.getHeroes()()).toEqual([{ id: '2', name: 'Ironman' }]);
   });
 
   it('should handle error and return false if delete fails', async () => {
     const heroId = 'dc-batman';
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation();
 
-    const deleteHero = service.deleteHeroe(heroId);
-    const deleteHeroPromise = firstValueFrom(deleteHero);
+    service.deleteHeroe(heroId);
 
     const req = httpTesting.expectOne(`${baseUrl}/heroes/${heroId}`);
-    expect(req.request.method).toBe('DELETE');
+    req.error(new ErrorEvent('Network error'));
 
-    const errorResponse = { status: 500, statusText: 'Server Error' };
-    req.flush('Error', errorResponse);
+    expect(errorSpy).toHaveBeenCalledWith(
+      `Error al eliminar el héroe con ID ${heroId}:`,
+      expect.anything()
+    );
 
-    expect(await deleteHeroPromise).toBe(false);
+    errorSpy.mockRestore();
   });
 });
