@@ -5,13 +5,13 @@ import { BehaviorSubject } from 'rxjs';
   providedIn: 'root',
 })
 export class LoadingService {
-  private loadingSubject = new BehaviorSubject<boolean>(false);  // Controla el estado de la carga
-  loading$ = this.loadingSubject.asObservable();  // Observable para otros componentes
+  private loadingSubject = new BehaviorSubject<boolean>(false);
+  loading$ = this.loadingSubject.asObservable();
 
   hideLoading(): void {
     this.loadingSubject.next(false);
   }
   showLoading(): void {
-    this.loadingSubject.next(true);  // Actualiza el estado a "cargando"
+    this.loadingSubject.next(true);
   }
 }
